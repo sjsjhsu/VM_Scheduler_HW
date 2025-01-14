@@ -7,7 +7,6 @@ import numpy as np
 import json
 from collections import defaultdict
 
-# 加载虚拟机数据
 with open("vm_analysis_results.json", "r") as f:
     vm_data = json.load(f)
 
@@ -16,7 +15,7 @@ vms = []
 for vm in vm_data:
     vms.append({
         "vm_id": vm["vm_id"],
-        "periods":  vm["top_periods"],
+        "periods": vm["top_periods"],
         "amplitudes": vm["top_amplitudes"],
         "phases": vm["top_phases"],
     })
@@ -32,9 +31,9 @@ def group_by_period(vms, epsilon_T=50):
     """
     groups = defaultdict(list)
     for vm in vms:
-        # 使用虚拟机的第一个主周期作为分组依据
+        # 使用虚拟机的第一个非直流分量的主周期作为分组依据
         main_period = vm["periods"][1]
-        group_key = round(main_period / epsilon_T)  # 根据阈值进行分组
+        group_key = round(main_period / epsilon_T)
         groups[group_key].append(vm)
     return groups
 
@@ -51,17 +50,16 @@ def calculate_score(vm1, vm2, w1=1.0, w2=5.0, w3=3.0):
     :return: 配对得分（数值越大越适合配对）
     """
 
-    # 获取虚拟机的周期、相位和幅度信息
     periods1 = vm1["periods"]  # 虚拟机1的周期列表
     periods2 = vm2["periods"]  # 虚拟机2的周期列表
-    phases1 = vm1["phases"]    # 虚拟机1的相位列表
-    phases2 = vm2["phases"]    # 虚拟机2的相位列表
+    phases1 = vm1["phases"]  # 虚拟机1的相位列表
+    phases2 = vm2["phases"]  # 虚拟机2的相位列表
     amplitudes1 = vm1["amplitudes"]  # 虚拟机1的幅度列表
     amplitudes2 = vm2["amplitudes"]  # 虚拟机2的幅度列表
 
     # 1. 计算周期差异
     norm_freq_diff = 0.0
-    for i in range(1, len(periods1)):  # 从索引1开始（跳过第一个周期，即inf）
+    for i in range(1, len(periods1)):  # 从索引1开始（跳过第一个周期，即直流分量,inf）
         period1 = periods1[i]
         period2 = periods2[i]
         max_period = max(period1, period2)
@@ -69,32 +67,31 @@ def calculate_score(vm1, vm2, w1=1.0, w2=5.0, w3=3.0):
             norm_freq_diff += abs(period1 - period2) / max_period
     freq_score = -norm_freq_diff  # 周期差越小，得分越高
 
-    # 2. 计算相位匹配得分（不需要归一化）
-    phase_score = 0.0  # 初始化相位匹配得分
-    for i in range(1, len(phases1)):  # 从索引1开始（跳过直流分量的相位）
+    # 2. 计算相位匹配
+    phase_score = 0.0
+    for i in range(1, len(phases1)):
         phase1 = phases1[i]
         phase2 = phases2[i]
-        phase_diff = abs(phase1 - phase2)  # 计算相位差
-        phase_score += np.cos(phase_diff - np.pi)  # 计算相位互补得分
+        phase_diff = abs(phase1 - phase2)  # 相位差
+        phase_score += np.cos(phase_diff - np.pi)
 
     # 3. 计算幅度差异
     norm_amp_diff = 0.0
-    for i in range(1, len(amplitudes1)):  # 从索引1开始（跳过直流分量的幅度）
+    for i in range(1, len(amplitudes1)):
         amplitude1 = amplitudes1[i]
         amplitude2 = amplitudes2[i]
         max_amplitude = max(amplitude1, amplitude2)
-        if max_amplitude > 0:  # 避免除以0
+        if max_amplitude > 0:
             norm_amp_diff += abs(amplitude1 - amplitude2) / max_amplitude
     amp_score = -norm_amp_diff  # 幅度差越小，得分越高
 
-    # 4. 加权求和计算总得分
     total_score = w1 * freq_score + w2 * phase_score + w3 * amp_score
 
     return total_score
 
 
 # 按周期分组
-epsilon_T = 50  # 分组阈值
+epsilon_T = 50
 groups = group_by_period(vms, epsilon_T=epsilon_T)
 
 # 分组内配对
@@ -103,7 +100,7 @@ pairs = []
 
 for group_key, group in groups.items():
     n = len(group)
-    if n < 2:  # 如果组内虚拟机不足两台，跳过
+    if n < 2:  # 组内虚拟机不足两台
         continue
     score_matrix = np.zeros((n, n))
     for i in range(n):
@@ -126,6 +123,16 @@ for group_key, group in groups.items():
             group_matched.add(i)
             group_matched.add(best_j)
 
-# 输出配对结果
 for pair in pairs:
     print(f"虚拟机 {pair[0]} 和 虚拟机 {pair[1]} 配对，配对得分：{pair[2]:.3f}")
+
+output_file = "vm_pairs_scores.json"
+
+output_data = [
+    {"vm1": pair[0], "vm2": pair[1], "score": round(pair[2], 3)} for pair in pairs
+]
+
+with open(output_file, "w", encoding="utf-8") as f:
+    json.dump(output_data, f, ensure_ascii=False, indent=4)
+
+print(f"配对结果已保存到 {output_file}")
