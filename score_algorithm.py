@@ -58,14 +58,14 @@ def calculate_score(vm1, vm2, w1=1.0, w2=5.0, w3=3.0):
     amplitudes2 = vm2["amplitudes"]  # 虚拟机2的幅度列表
 
     # 1. 计算周期差异
-    norm_freq_diff = 0.0
+    freq_diff = 0.0
     for i in range(1, len(periods1)):  # 从索引1开始（跳过第一个周期，即直流分量,inf）
         period1 = periods1[i]
         period2 = periods2[i]
         max_period = max(period1, period2)
         if max_period > 0:
-            norm_freq_diff += abs(period1 - period2) / max_period
-    freq_score = -norm_freq_diff  # 周期差越小，得分越高
+            freq_diff += abs(period1 - period2) / max_period
+    freq_score = -freq_diff  # 周期差越小，得分越高
 
     # 2. 计算相位匹配
     phase_score = 0.0
@@ -123,13 +123,17 @@ for group_key, group in groups.items():
             group_matched.add(i)
             group_matched.add(best_j)
 
-for pair in pairs:
-    print(f"虚拟机 {pair[0]} 和 虚拟机 {pair[1]} 配对，配对得分：{pair[2]:.3f}")
+# 按得分由高到低排序
+sorted_pairs = sorted(pairs, key=lambda x: x[2], reverse=True)
+
+# for pair in pairs:
+#     print(f"虚拟机 {pair[0]} 和 虚拟机 {pair[1]} 配对，配对得分：{pair[2]:.3f}")
+
 
 output_file = "vm_pairs_scores.json"
 
 output_data = [
-    {"vm1": pair[0], "vm2": pair[1], "score": round(pair[2], 3)} for pair in pairs
+    {"vm1": pair[0], "vm2": pair[1], "score": round(pair[2], 3)} for pair in sorted_pairs
 ]
 
 with open(output_file, "w", encoding="utf-8") as f:

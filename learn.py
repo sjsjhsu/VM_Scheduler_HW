@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 
 # 假设数据存储在vm_util.json文件中
-with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm1202.json', 'r') as f:
+with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm8.json', 'r') as f:
     data = json.load(f)
 
 # 取出每五分钟的CPU利用率数据
