@@ -69,8 +69,24 @@ def visualize_results(original, reconstructed, title, distortion_rate):
     plt.show()
 
 
-def evaluate_one_pair(vm1, vm2, data_folder):
-    # 加载虚拟机数据
+# 计算波动程度的函数
+def calculate_relative_variability(signal):
+    mean_value = np.mean(signal)  # 均值
+    std_dev = np.std(signal)  # 标准差
+    rms = np.sqrt(np.mean(signal ** 2))  # 均方根值
+    range_val = np.max(signal) - np.min(signal)  # 范围（最大值 - 最小值）
+
+    # 计算变异系数（相对波动率）
+    if mean_value != 0:  # 避免除以零
+        cv = std_dev / mean_value
+    else:
+        cv = float('inf')  # 如果均值为零，则返回无穷大，表示无法计算相对波动率
+
+    return std_dev, rms, range_val, cv
+
+
+def combine_one_pair_original(vm1, vm2, data_folder):
+    # 方法一 CPU 原始利用率直接相加
     vm1_file = os.path.join(data_folder, vm1)
     vm2_file = os.path.join(data_folder, vm2)
     vm1_data = load_vm_data(vm1_file)
@@ -78,7 +94,8 @@ def evaluate_one_pair(vm1, vm2, data_folder):
 
     # 计算 CPU 利用率总和
     combined_util = compute_combined_util(vm1_data, vm2_data)
-
+    smoothed_series_vm1 = process_vm_data(vm1_data)
+    smoothed_series_vm2 = process_vm_data(vm2_data)
     smoothed_series = process_vm_data(combined_util)
 
     N = len(smoothed_series)  # 数据长度
@@ -94,7 +111,6 @@ def evaluate_one_pair(vm1, vm2, data_folder):
     # 你可以通过查看 amplitude 来选择主频成分
     num_components = 40
     main_frequencies = frequencies[:num_components]
-    main_T = 1 / main_frequencies
     main_amplitudes = amplitude[:num_components]
     main_phases = phase[:num_components]
 
@@ -104,21 +120,124 @@ def evaluate_one_pair(vm1, vm2, data_folder):
         reconstructed_signal += main_amplitudes[i] * np.exp(1j * main_phases[i]) * np.exp(
             2j * np.pi * main_frequencies[i] * np.arange(N))
 
+    # 计算虚拟机1、虚拟机2以及组合信号的波动程度
+    std_vm1, rms_vm1, range_vm1, cv_vm1 = calculate_relative_variability(np.real(smoothed_series_vm1))
+    std_vm2, rms_vm2, range_vm2, cv_vm2 = calculate_relative_variability(np.real(smoothed_series_vm2))
+    std_combined, rms_combined, range_combined, cv_combined = calculate_relative_variability(
+        np.real(reconstructed_signal))
+
+    N1 = len(smoothed_series_vm1)
+    fft_values1 = np.fft.fft(smoothed_series_vm1)
+    # 计算频率分量
+    frequencies1 = np.fft.fftfreq(N1)
+    # 获取幅度和相位
+    amplitude1 = np.abs(fft_values1)  # 幅度
+    phase1 = np.angle(fft_values1)  # 相位
+
+    main_frequencies1 = frequencies1[:num_components]
+    main_amplitudes1 = amplitude1[:num_components]
+    main_phases1 = phase1[:num_components]
+    # 重构信号
+    reconstructed_signal1 = np.zeros_like(smoothed_series_vm1, dtype=complex)
+    for i in range(num_components):
+        reconstructed_signal1 += main_amplitudes1[i] * np.exp(1j * main_phases1[i]) * np.exp(
+            2j * np.pi * main_frequencies1[i] * np.arange(N1))
+
+    N2 = len(smoothed_series_vm2)
+    fft_values2 = np.fft.fft(smoothed_series_vm2)
+    # 计算频率分量
+    frequencies2 = np.fft.fftfreq(N2)
+    # 获取幅度和相位
+    amplitude2 = np.abs(fft_values2)  # 幅度
+    phase2 = np.angle(fft_values2)  # 相位
+
+    main_frequencies2 = frequencies2[:num_components]
+    main_amplitudes2 = amplitude2[:num_components]
+    main_phases2 = phase2[:num_components]
+    # 重构信号
+    reconstructed_signal2 = np.zeros_like(smoothed_series_vm2, dtype=complex)
+    for i in range(num_components):
+        reconstructed_signal2 += main_amplitudes2[i] * np.exp(1j * main_phases2[i]) * np.exp(
+            2j * np.pi * main_frequencies2[i] * np.arange(N2))
+
     plt.figure(figsize=(12, 6))
 
-    # 原始数据与拟合数据进行比较
-    plt.subplot(2, 1, 1)
-    plt.plot(smoothed_series, label="Original Data")
-    plt.title("Original Data")
+    # VM1数据
+    plt.subplot(3, 1, 1)
+    plt.plot(np.real(reconstructed_signal1), label="VM1 Data")
+    plt.title("VM1 Data")
     plt.legend()
+    plt.text(0.95, 0.95, f"CV: {cv_vm1:.4f}", ha='right', va='top', transform=plt.gca().transAxes, fontsize=12,
+             color='blue')
 
-    plt.subplot(2, 1, 2)
-    plt.plot(np.real(reconstructed_signal), label="Reconstructed from FFT")
-    plt.title("Reconstructed Data from FFT")
+    # VM2数据
+    plt.subplot(3, 1, 2)
+    plt.plot(np.real(reconstructed_signal2), label="VM2 Data")
+    plt.title("VM2 Data")
     plt.legend()
+    plt.text(0.95, 0.95, f"CV: {cv_vm2:.4f}", ha='right', va='top', transform=plt.gca().transAxes, fontsize=12,
+             color='blue')
+
+    # 组合数据
+    plt.subplot(3, 1, 3)
+    plt.plot(np.real(reconstructed_signal), label="Combine Data")
+    plt.title("Combine Data")
+    plt.legend()
+    plt.text(0.95, 0.95, f"CV: {cv_combined:.4f}", ha='right', va='top', transform=plt.gca().transAxes, fontsize=12,
+             color='blue')
 
     plt.tight_layout()
     plt.show()
+
+
+# def combine_one_pair_process(vm1, vm2, data_folder):
+#     # 方法二 先对两个数据分别处理，然后再相加
+#     vm1_file = os.path.join(data_folder, vm1)
+#     vm2_file = os.path.join(data_folder, vm2)
+#     vm1_data = load_vm_data(vm1_file)
+#     vm2_data = load_vm_data(vm2_file)
+#
+#     min_length = min(len(vm1_data), len(vm2_data))
+#     smoothed_series1 = process_vm_data(vm1_data[:min_length])
+#     fft_values1 = np.fft.fft(smoothed_series1)
+#     smoothed_series2 = process_vm_data(vm2_data[:min_length])
+#     fft_values2 = np.fft.fft(smoothed_series2)
+#
+#     combined_fft = fft_values1 + fft_values2
+#     frequencies = np.fft.fftfreq(min_length)
+#     # 3. 获取幅度和相位
+#     amplitude = np.abs(combined_fft)  # 幅度
+#     phase = np.angle(combined_fft)  # 相位
+#
+#     num_components = 40
+#     main_frequencies = frequencies[:num_components]
+#     main_T = 1 / main_frequencies
+#     main_amplitudes = amplitude[:num_components]
+#     main_phases = phase[:num_components]
+#
+#     # 5. 重构信号
+#     reconstructed_signal = np.zeros_like(smoothed_series, dtype=complex)
+#     for i in range(num_components):
+#         reconstructed_signal += main_amplitudes[i] * np.exp(1j * main_phases[i]) * np.exp(
+#             2j * np.pi * main_frequencies[i] * np.arange(N))
+#
+#     plt.figure(figsize=(12, 6))
+#
+#     # print(np.real(reconstructed_signal))
+#     fft_real = np.real(reconstructed_signal)
+#     # 原始数据与拟合数据进行比较
+#     plt.subplot(2, 1, 1)
+#     plt.plot(smoothed_series, label="Original Data")
+#     plt.title("Original Data")
+#     plt.legend()
+#
+#     plt.subplot(2, 1, 2)
+#     plt.plot(np.real(reconstructed_signal), label="Reconstructed from FFT")
+#     plt.title("Reconstructed Data from FFT")
+#     plt.legend()
+#
+#     plt.tight_layout()
+#     plt.show()
 
 
 # 评估失真率
@@ -133,7 +252,7 @@ def evaluate_distortion(vm1, vm2, data_folder):
     combined_util1 = compute_combined_util(vm1_data, vm2_data)
     smoothed_series = process_vm_data(combined_util1)
     fft_values = np.fft.fft(smoothed_series)  # 傅里叶变换
-    reconstructed_series1 = np.fft.ifft(fft_values).real  # 重构信号
+    reconstructed_series1 = np.fft.ifft(fft_values).real
 
     # 方法二 先对两个数据分别处理，然后再相加
     min_length = min(len(vm1_data), len(vm2_data))
@@ -141,18 +260,18 @@ def evaluate_distortion(vm1, vm2, data_folder):
     fft_values1 = np.fft.fft(smoothed_series1)
     smoothed_series2 = process_vm_data(vm2_data[:min_length])
     fft_values2 = np.fft.fft(smoothed_series2)
-    # 合成傅里叶结果：幅度相加，相位保持
+    # 合成
     combined_fft = fft_values1 + fft_values2
-    reconstructed_series2 = np.fft.ifft(combined_fft).real  # 重构信号
+    reconstructed_series2 = np.fft.ifft(combined_fft).real
 
-    # 计算失真率
+    # 失真率
     distortion_rate = compute_distortion(np.array(reconstructed_series1), np.array(reconstructed_series2))
 
-    # 可视化对比
     visualize_results(reconstructed_series1, reconstructed_series2, f"Comparison of Methods for {vm1} and {vm2}",
                       distortion_rate)
 
 
-evaluate_distortion("vm1037.json", "vm8.json", "Hotspot/Hotspot")
+combine_one_pair_original("vm1.json", "vm1202.json", "Hotspot/Hotspot")
 
-# evaluate_one_pair("vm1.json", "vm1202.json", "Hotspot/Hotspot")
+evaluate_distortion("vm1.json", "vm1202.json", "Hotspot/Hotspot")
+
