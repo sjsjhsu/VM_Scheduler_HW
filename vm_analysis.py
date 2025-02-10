@@ -4,12 +4,13 @@ import numpy as np
 import pandas as pd
 from scipy.signal import savgol_filter
 
-# 定义文件夹路径和输出路径
+# 用傅里叶变换处理所有虚拟机原始数据，保留每个虚拟机幅度最大的前四个分量的周期，幅度，相位
+
 input_folder = "./Hotspot/Hotspot/"  # JSON 文件所在的文件夹
 output_json = "./vm_analysis_results.json"  # 保存分析结果的 JSON 文件
 
 
-# 定义函数：处理单个虚拟机数据
+# 处理单个虚拟机数据
 def process_vm_file(file_path):
     # 读取 JSON 文件
     with open(file_path, 'r') as f:
@@ -57,7 +58,7 @@ def process_vm_file(file_path):
 
     # 对幅度排序，找出最重要的频率成分
     sorted_indices = np.argsort(main_amplitudes)[::-1]
-    top_periods = main_T [sorted_indices[:4]]  # 最重要的三个周期
+    top_periods = main_T[sorted_indices[:4]]  # 最重要的三个周期
     top_amplitudes = main_amplitudes[sorted_indices[:4]]  # 最重要的三个幅度
     top_phases = main_phases[sorted_indices[:4]]  # 最重要的三个相位
 

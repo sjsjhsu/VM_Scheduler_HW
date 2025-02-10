@@ -1,23 +1,21 @@
 import os
 import json
-
 import matplotlib
 import pandas as pd
 import numpy as np
 from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 
-matplotlib.use('TkAgg')  # 设置后端为 TkAgg
+matplotlib.use('TkAgg')
 
 
-# 加载虚拟机的 CPU 利用率数据
 def load_vm_data(file_path):
     with open(file_path, "r") as f:
         data = json.load(f)
     return data["vm_util"][0]  # 返回 CPU 利用率数据
 
 
-# 计算两台虚拟机的 CPU 利用率总和
+# 将两台虚拟机的 CPU 利用率相加
 def compute_combined_util(vm1_data, vm2_data):
     # 截取最小长度的数据
     min_length = min(len(vm1_data), len(vm2_data))
@@ -27,7 +25,7 @@ def compute_combined_util(vm1_data, vm2_data):
 
 
 def process_vm_data(vm_data):
-    time_start = "2022-09-14 16:35:00"  # 替换为实际的起始时间
+    time_start = "2022-09-14 16:35:00"
     time_index = pd.date_range(start=time_start, periods=len(vm_data), freq='5min')  # 每5分钟一个时间点
     threshold_factor = 2
 
@@ -45,7 +43,7 @@ def process_vm_data(vm_data):
     # 将数据转换为pandas的Series
     time_series_cleaned = pd.Series(vm_data, index=time_index)
 
-    # 3. 去抖动：使用Savitzky-Golay滤波平滑数据，窗口大小为11
+    # 3. 去抖动：使用Savitzky-Golay滤波平滑数据
     smoothed_series = savgol_filter(time_series_cleaned, window_length=40, polyorder=2)
 
     return smoothed_series
@@ -86,7 +84,7 @@ def calculate_relative_variability(signal):
 
 
 def combine_one_pair_original(vm1, vm2, data_folder):
-    # 方法一 CPU 原始利用率直接相加
+    # CPU 原始利用率直接相加
     vm1_file = os.path.join(data_folder, vm1)
     vm2_file = os.path.join(data_folder, vm2)
     vm1_data = load_vm_data(vm1_file)
@@ -119,12 +117,6 @@ def combine_one_pair_original(vm1, vm2, data_folder):
     for i in range(num_components):
         reconstructed_signal += main_amplitudes[i] * np.exp(1j * main_phases[i]) * np.exp(
             2j * np.pi * main_frequencies[i] * np.arange(N))
-
-    # 计算虚拟机1、虚拟机2以及组合信号的波动程度
-    std_vm1, rms_vm1, range_vm1, cv_vm1 = calculate_relative_variability(np.real(smoothed_series_vm1))
-    std_vm2, rms_vm2, range_vm2, cv_vm2 = calculate_relative_variability(np.real(smoothed_series_vm2))
-    std_combined, rms_combined, range_combined, cv_combined = calculate_relative_variability(
-        np.real(reconstructed_signal))
 
     N1 = len(smoothed_series_vm1)
     fft_values1 = np.fft.fft(smoothed_series_vm1)
@@ -160,6 +152,12 @@ def combine_one_pair_original(vm1, vm2, data_folder):
         reconstructed_signal2 += main_amplitudes2[i] * np.exp(1j * main_phases2[i]) * np.exp(
             2j * np.pi * main_frequencies2[i] * np.arange(N2))
 
+    # 计算虚拟机1、虚拟机2以及组合信号的波动程度
+    std_vm1, rms_vm1, range_vm1, cv_vm1 = calculate_relative_variability(np.real(reconstructed_signal1))
+    std_vm2, rms_vm2, range_vm2, cv_vm2 = calculate_relative_variability(np.real(reconstructed_signal2))
+    std_combined, rms_combined, range_combined, cv_combined = calculate_relative_variability(
+        np.real(reconstructed_signal))
+
     plt.figure(figsize=(12, 6))
 
     # VM1数据
@@ -188,56 +186,6 @@ def combine_one_pair_original(vm1, vm2, data_folder):
 
     plt.tight_layout()
     plt.show()
-
-
-# def combine_one_pair_process(vm1, vm2, data_folder):
-#     # 方法二 先对两个数据分别处理，然后再相加
-#     vm1_file = os.path.join(data_folder, vm1)
-#     vm2_file = os.path.join(data_folder, vm2)
-#     vm1_data = load_vm_data(vm1_file)
-#     vm2_data = load_vm_data(vm2_file)
-#
-#     min_length = min(len(vm1_data), len(vm2_data))
-#     smoothed_series1 = process_vm_data(vm1_data[:min_length])
-#     fft_values1 = np.fft.fft(smoothed_series1)
-#     smoothed_series2 = process_vm_data(vm2_data[:min_length])
-#     fft_values2 = np.fft.fft(smoothed_series2)
-#
-#     combined_fft = fft_values1 + fft_values2
-#     frequencies = np.fft.fftfreq(min_length)
-#     # 3. 获取幅度和相位
-#     amplitude = np.abs(combined_fft)  # 幅度
-#     phase = np.angle(combined_fft)  # 相位
-#
-#     num_components = 40
-#     main_frequencies = frequencies[:num_components]
-#     main_T = 1 / main_frequencies
-#     main_amplitudes = amplitude[:num_components]
-#     main_phases = phase[:num_components]
-#
-#     # 5. 重构信号
-#     reconstructed_signal = np.zeros_like(smoothed_series, dtype=complex)
-#     for i in range(num_components):
-#         reconstructed_signal += main_amplitudes[i] * np.exp(1j * main_phases[i]) * np.exp(
-#             2j * np.pi * main_frequencies[i] * np.arange(N))
-#
-#     plt.figure(figsize=(12, 6))
-#
-#     # print(np.real(reconstructed_signal))
-#     fft_real = np.real(reconstructed_signal)
-#     # 原始数据与拟合数据进行比较
-#     plt.subplot(2, 1, 1)
-#     plt.plot(smoothed_series, label="Original Data")
-#     plt.title("Original Data")
-#     plt.legend()
-#
-#     plt.subplot(2, 1, 2)
-#     plt.plot(np.real(reconstructed_signal), label="Reconstructed from FFT")
-#     plt.title("Reconstructed Data from FFT")
-#     plt.legend()
-#
-#     plt.tight_layout()
-#     plt.show()
 
 
 # 评估失真率
@@ -271,7 +219,6 @@ def evaluate_distortion(vm1, vm2, data_folder):
                       distortion_rate)
 
 
-combine_one_pair_original("vm1.json", "vm1202.json", "Hotspot/Hotspot")
+combine_one_pair_original("vm32.json", "vm655.json", "Hotspot/Hotspot")
 
-evaluate_distortion("vm1.json", "vm1202.json", "Hotspot/Hotspot")
-
+# evaluate_distortion("vm1.json", "vm1202.json", "Hotspot/Hotspot")

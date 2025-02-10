@@ -1,18 +1,14 @@
 import json
-
 import matplotlib
 import numpy as np
-from scipy.optimize import curve_fit
-from statsmodels.tsa.stl._stl import STL
-
 matplotlib.use('TkAgg')  # 设置后端为 TkAgg
-
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 
-# 假设数据存储在vm_util.json文件中
-with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm8.json', 'r') as f:
+# 处理虚拟机原始数据，包括去除热点，滤波，傅里叶变换
+
+with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm1.json', 'r') as f:
     data = json.load(f)
 
 # 取出每五分钟的CPU利用率数据
@@ -63,94 +59,6 @@ plt.title('Data After Smoothing')
 plt.tight_layout()
 plt.show()
 
-# -------------------- 傅里叶变换 --------------------
-def fft_fit(data):
-    N = len(data)
-    freqs = np.fft.fftfreq(N)
-    fft_values = np.fft.fft(data)
-
-    # 选择主要的频率分量（通常是低频成分）
-    half_N = N // 2
-    fft_values[half_N:] = 0  # 只保留正频率部分
-
-    # 逆FFT恢复信号
-    fitted_data = np.fft.ifft(fft_values)
-
-    return fitted_data.real
-
-
-# -------------------- 三角函数拟合 --------------------
-def sine_wave(t, A, omega, phi, C):
-    return A * np.sin(omega * t + phi) + C
-
-
-def triangle_fit(data):
-    time = np.arange(len(data))
-
-    # 使用curve_fit进行拟合，初始猜测参数
-    p0 = [np.max(data) - np.min(data), 2 * np.pi / len(data), 0, np.mean(data)]
-    popt, _ = curve_fit(sine_wave, time, data, p0=p0, maxfev=5000)
-
-    # 使用拟合的参数生成拟合数据
-    fitted_data = sine_wave(time, *popt)
-
-    return fitted_data
-
-
-# -------------------- STL 分解 --------------------
-def stl_decomposition(data):
-    # 转换为时间序列，假设周期为一天（或者根据需要选择周期）
-    time_index = pd.date_range(start="2022-01-01", periods=len(data), freq="D")
-    series = pd.Series(data, index=time_index)
-
-    # 使用STL分解，周期设置为1440（即一天的分钟数）
-    stl = STL(series)
-    result = stl.fit()
-
-    trend_component = result.trend
-    seasonal_component = result.seasonal
-    residual_component = result.resid
-
-    return trend_component, seasonal_component, residual_component
-
-
-# fft_fitted = fft_fit(smoothed_series)
-
-# 2. 三角函数拟合
-# triangle_fitted = triangle_fit(smoothed_series)
-
-# 3. STL分解
-# trend, seasonal, residual = stl_decomposition(smoothed_series)
-#
-# # 绘制结果
-# plt.figure(figsize=(12, 10))
-#
-# plt.subplot(2, 1, 1)
-# plt.plot(smoothed_series, label='Original Data')
-# plt.title('Original Data')
-# plt.legend(loc='best')
-#
-# # plt.subplot(3, 1, 2)
-# # plt.plot(fft_fitted, label='FFT Fitted Data', color='orange')
-# # plt.title('FFT Fitted Data')
-# # plt.legend(loc='best')
-#
-# # plt.subplot(4, 1, 3)
-# # plt.plot(triangle_fitted, label='Triangle Fitted Data', color='green')
-# # plt.title('Triangle Function Fitted Data')
-# # plt.legend(loc='best')
-#
-# plt.subplot(2, 1, 2)
-# plt.plot(trend, label='Trend Component', color='blue')
-# plt.plot(seasonal, label='Seasonal Component', color='red')
-# plt.plot(residual, label='Residual Component', color='purple')
-# plt.title('STL Decomposition')
-# plt.legend(loc='best')
-#
-# plt.tight_layout()
-# plt.show()
-
-
 N = len(smoothed_series)  # 数据长度
 fft_values = np.fft.fft(smoothed_series)  # 傅里叶变换
 
@@ -169,16 +77,6 @@ main_frequencies = frequencies[:num_components]
 main_T = 1 / main_frequencies
 main_amplitudes = amplitude[:num_components]
 main_phases = phase[:num_components]
-
-# num_components = 40
-# main_frequencies = frequencies[:num_components]
-# main_amplitudes = amplitude[:num_components]
-# main_phases = phase[:num_components]
-#
-# # 过滤掉 f = 0 的频率分量
-# main_frequencies = main_frequencies[main_frequencies != 0]  # 移除 0
-# main_amplitudes = main_amplitudes[:len(main_frequencies)]  # 保持频率和幅度长度一致
-# main_T = 1 / main_frequencies  # 转换为周期
 
 # 打印前几个频率成分的信息
 print("\nMain Frequencies (first 40):")
@@ -226,31 +124,3 @@ plt.tight_layout()
 plt.show()
 
 data = fft_real
-
-# # 1. 定义三角函数模型
-# def sine_wave(t, A, f, phi, C):
-#     """三角函数模型，正弦波加上常数偏移"""
-#     return A * np.sin(2 * np.pi * f * t + phi) + C
-
-
-# # 2. 将数据分割为若干个周期，每个周期288个数据点
-# period_length = 288
-# num_periods = len(data) // period_length  # 计算周期数
-#
-# # 绘制每个周期的拟合结果
-# plt.figure(figsize=(16, 12))
-# for i in range(num_periods):
-#     # 取出第i个周期的数据
-#     period_data = data[i * period_length: (i + 1) * period_length]
-#
-#     triangle_fitted = triangle_fit(period_data)
-#
-#     # 2.5. 绘制原始数据和拟合结果
-#     plt.subplot(num_periods, 1, i + 1)
-#     plt.plot(period_data, label='Original Data', color='blue')
-#     plt.plot(triangle_fitted, label='Fitted Curve', color='red', linestyle='--')
-#     plt.legend(loc='best')
-#     plt.title(f'Period {i + 1}')
-#
-# plt.tight_layout()
-# plt.show()

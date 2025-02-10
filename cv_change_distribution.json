@@ -1,0 +1,10 @@
+{
+    "total_pairs": 626,
+    "increase_0_10": 35,
+    "increase_10_50": 66,
+    "increase_50_100": 112,
+    "decrease_0_10": 36,
+    "decrease_10_50": 270,
+    "decrease_50_100": 107,
+    "no_change": 0
+}

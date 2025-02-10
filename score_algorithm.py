@@ -1,8 +1,7 @@
+# 在vm_analysis处理过原始数据后，对处理后的虚拟机数据进行配对打分，并将结果保存
 # 根据周期筛选
 # 根据幅度
 # 根据相位计算相似度
-
-
 import numpy as np
 import json
 from collections import defaultdict
@@ -125,18 +124,10 @@ for group_key, group in groups.items():
 
 # 按得分由高到低排序
 sorted_pairs = sorted(pairs, key=lambda x: x[2], reverse=True)
-
-# for pair in pairs:
-#     print(f"虚拟机 {pair[0]} 和 虚拟机 {pair[1]} 配对，配对得分：{pair[2]:.3f}")
-
-
 output_file = "vm_pairs_scores.json"
-
 output_data = [
     {"vm1": pair[0], "vm2": pair[1], "score": round(pair[2], 3)} for pair in sorted_pairs
 ]
 
 with open(output_file, "w", encoding="utf-8") as f:
     json.dump(output_data, f, ensure_ascii=False, indent=4)
-
-print(f"配对结果已保存到 {output_file}")

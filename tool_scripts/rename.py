@@ -33,5 +33,5 @@ def rename_vm_files(folder_path):
 
 
 # 示例调用
-folder_path = "./Hotspot/Hotspot"  # 替换为你的文件夹路径
+folder_path = "../Hotspot/Hotspot"  # 替换为你的文件夹路径
 rename_vm_files(folder_path)
