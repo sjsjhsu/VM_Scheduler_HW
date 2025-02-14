@@ -219,6 +219,6 @@ def evaluate_distortion(vm1, vm2, data_folder):
                       distortion_rate)
 
 
-combine_one_pair_original("vm1253.json", "vm1.json", "Hotspot/Hotspot")
+combine_one_pair_original("vm3.json", "vm800.json", "Hotspot/Hotspot")
 
 # evaluate_distortion("vm1.json", "vm1202.json", "Hotspot/Hotspot")
