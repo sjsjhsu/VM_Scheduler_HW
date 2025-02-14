@@ -8,7 +8,7 @@ from scipy.signal import savgol_filter
 
 # 处理虚拟机原始数据，包括去除热点，滤波，傅里叶变换
 
-with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm1.json', 'r') as f:
+with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm1253.json', 'r') as f:
     data = json.load(f)
 
 # 取出每五分钟的CPU利用率数据

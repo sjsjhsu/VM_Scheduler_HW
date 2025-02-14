@@ -19,3 +19,17 @@
 **evaluate.py**：对打分算法执行的结果进行评估，包括CV（变异系数）的计算以及失真率的计算
 
 **CV_analysis.py**：对所有虚拟机对的配对结果进行分析，主要是统计CV的变化率分布以及虚拟机对的得分和CV的变化率的关系
+
+
+
+算法
+
+对于两个信号 A1*sin(C1+Bx) + A2*sin(C2+Bx)相加（频率相同）
+
+有合成公式如下
+
+![gongshi](C:\Users\18392\Desktop\gongshi.png)
+
+其中对于R的计算，可以进一步化简
+
+![化简](C:\Users\18392\Desktop\huajian.png)

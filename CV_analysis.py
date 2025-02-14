@@ -311,5 +311,5 @@ def plot_score_vs_cv_change(file_path):
 # plot_cv_change_distribution(output_file2)
 
 # 得分和cv变化的散点图
-file_path = "vm_pairs_cv_analysis.json"
+file_path = "json/vm_pairs_cv_analysis.json"
 plot_score_vs_cv_change(file_path)

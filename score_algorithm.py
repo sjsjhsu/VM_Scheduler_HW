@@ -6,7 +6,7 @@ import numpy as np
 import json
 from collections import defaultdict
 
-with open("vm_analysis_results.json", "r") as f:
+with open("json/vm_analysis_results.json", "r") as f:
     vm_data = json.load(f)
 
 # 提取虚拟机的特征
@@ -124,7 +124,7 @@ for group_key, group in groups.items():
 
 # 按得分由高到低排序
 sorted_pairs = sorted(pairs, key=lambda x: x[2], reverse=True)
-output_file = "vm_pairs_scores.json"
+output_file = "json/vm_pairs_scores.json"
 output_data = [
     {"vm1": pair[0], "vm2": pair[1], "score": round(pair[2], 3)} for pair in sorted_pairs
 ]
