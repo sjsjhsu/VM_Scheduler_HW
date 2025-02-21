@@ -28,8 +28,7 @@
 
 有合成公式如下
 
-![gongshi](C:\Users\18392\Desktop\gongshi.png)
-
+![gongshi](./picture/gongshi.png)
 其中对于R的计算，可以进一步化简
 
-![化简](C:\Users\18392\Desktop\huajian.png)
+![化简](./picture/huajian.png)
