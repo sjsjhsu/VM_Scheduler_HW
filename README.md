@@ -20,15 +20,21 @@
 
 **CV_analysis.py**：对所有虚拟机对的配对结果进行分析，主要是统计CV的变化率分布以及虚拟机对的得分和CV的变化率的关系
 
+**score_algorithm_second.py**：在score_algorithm.py的基础上，使用合成公式改进后的算法，详解如下
 
-
-算法
-
-对于两个信号 A1*sin(C1+Bx) + A2*sin(C2+Bx)相加（频率相同）
-
-有合成公式如下
+对于两个信号 A1*sin(C1+Bx) + A2*sin(C2+Bx)相加（频率相同），有合成公式如下
 
 ![gongshi](./picture/gongshi.png)
 其中对于R的计算，可以进一步化简
 
 ![化简](./picture/huajian.png)
+
+**error_analysis.py**：对于两个频率不同的信号使用上述公式进行拟合的误差分析
+
+**period_amplitude_statistics.py**：统计Hotspot中虚拟机CPU利用率处理后的周期和振幅
+
+**find_diff.py**：计算算法二配对前后虚拟机的平均利用率，P95利用率，最高利用率
+
+**cal_stats.py**：根据find_diff.py执行结果，计算虚拟机P95利用率下降百分率的分布以及平均的下降百分率等
+
+**find_top_cyclic.py**：寻找CPU利用率数据的周期性较明显的虚拟机

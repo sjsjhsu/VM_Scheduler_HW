@@ -174,18 +174,16 @@ def main():
     # save_diff(diff, output_file)
 
     # 分析
-    # diff_file = 'json/diff.json'  # diff.json 文件路径
+    # diff_file = 'json/diff.json'
     # results = analyze_diff_pairs(diff_file)
-    #
-    # # 保存结果到 JSON 文件
+
     # output_file = "json/analyzed_diff_results.json"
     # with open(output_file, 'w') as f:
     #     json.dump(results, f, indent=4)
 
-    file = 'json/vm_pairs_scores_second.json'  # diff.json 文件路径
+    file = 'json/vm_pairs_scores_second.json'
     results = analyze_pairs(file)
 
-    # 保存结果到 JSON 文件
     output_file = "json/analyzed_stats_results.json"
     with open(output_file, 'w') as f:
         json.dump(results, f, indent=4)
