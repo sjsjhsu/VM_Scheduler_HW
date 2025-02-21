@@ -6,13 +6,12 @@ from scipy.signal import savgol_filter
 
 # 用傅里叶变换处理所有虚拟机原始数据，保留每个虚拟机幅度最大的前四个分量的周期，幅度，相位
 
-input_folder = "./Hotspot/Hotspot/"  # JSON 文件所在的文件夹
-output_json = "./vm_analysis_results.json"  # 保存分析结果的 JSON 文件
+input_folder = "./Hotspot/Hotspot/"
+output_json = "./json/vm_analysis_results2.json"
 
 
 # 处理单个虚拟机数据
 def process_vm_file(file_path):
-    # 读取 JSON 文件
     with open(file_path, 'r') as f:
         data = json.load(f)
 
@@ -20,10 +19,8 @@ def process_vm_file(file_path):
     vm_util_all = data['vm_util']
     vm_util = vm_util_all[0]  # 取出 CPU 利用率数据
     time_start = pd.to_datetime(data['time_start'])
-    host_vcpus = data['host_vcpus']  # 假设每个虚拟机对应的vCPUs数目
     time_index = pd.date_range(start=time_start, periods=len(vm_util), freq='5min')
     threshold_factor = 2
-    time_series = pd.Series(vm_util, index=time_index)
 
     avg_value = vm_util[0]
     max_value = vm_util[0]
@@ -71,7 +68,6 @@ def process_vm_file(file_path):
 
 # 遍历文件夹中的所有 JSON 文件
 results = []
-vm_id_counter = 1  # 从 vm1 开始计数
 for filename in os.listdir(input_folder):
     if filename.endswith(".json"):  # 检查是否为 JSON 文件
         file_path = os.path.join(input_folder, filename)
@@ -84,7 +80,29 @@ for filename in os.listdir(input_folder):
                 "top_amplitudes": amplitudes,  # 前四个幅度
                 "top_phases": phases  # 前四个相位
             })
-            vm_id_counter += 1  # 虚拟机 ID 递增
+
+# with open('top.txt', 'r') as f:
+#     vm_ids = f.readlines()  # 读取所有虚拟机 ID，每行一个
+#     vm_ids = [vm_id.strip() for vm_id in vm_ids]  # 去除多余的空格和换行符
+#
+#     for vm_id in vm_ids:
+#         # 构造虚拟机 JSON 文件路径
+#         json_file = f"vm{vm_id}.json"
+#         file_path = os.path.join(input_folder, json_file)
+#
+#         if os.path.exists(file_path):  # 确保文件存在
+#             print(f"正在处理文件: {json_file}")
+#             periods, amplitudes, phases = process_vm_file(file_path)
+#
+#             if periods is not None:
+#                 results.append({
+#                     "vm_id": vm_id,  # 虚拟机 ID
+#                     "top_periods": periods,  # 前四个周期
+#                     "top_amplitudes": amplitudes,  # 前四个幅度
+#                     "top_phases": phases  # 前四个相位
+#                 })
+#         else:
+#             print(f"文件 {json_file} 未找到，跳过该虚拟机。")
 
 # 保存结果到 JSON 文件
 with open(output_json, "w") as jsonfile:

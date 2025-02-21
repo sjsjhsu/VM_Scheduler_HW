@@ -8,7 +8,7 @@ from scipy.signal import savgol_filter
 
 # 处理虚拟机原始数据，包括去除热点，滤波，傅里叶变换
 
-with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm1253.json', 'r') as f:
+with open(r'D:\PyCharm Projects\data_analysis\Hotspot\Hotspot\vm1199.json', 'r') as f:
     data = json.load(f)
 
 # 取出每五分钟的CPU利用率数据
@@ -40,24 +40,24 @@ time_series_cleaned = pd.Series(vm_util, index=time_index)
 smoothed_series = savgol_filter(time_series_cleaned, window_length=40, polyorder=2)
 print(smoothed_series)
 # 绘图部分
-plt.figure(figsize=(15, 6))
-
-# 画去除热点后的图
-plt.subplot(2, 1, 1)
-plt.plot(time_series, label='Original Data', alpha=0.6)
-plt.plot(time_series_cleaned, label='Data After Hotspot Removal', color='orange', linewidth=2)
-plt.legend(loc='best')
-plt.title('Data After Hotspot Removal')
-
-# 画去抖动后的图
-plt.subplot(2, 1, 2)
-plt.plot(time_series_cleaned, label='Data After Hotspot Removal', color='orange', alpha=0.6)
-plt.plot(time_index, smoothed_series, label='Smoothed Data (Savitzky-Golay)', color='green', linewidth=2)
-plt.legend(loc='best')
-plt.title('Data After Smoothing')
-
-plt.tight_layout()
-plt.show()
+# plt.figure(figsize=(15, 6))
+#
+# # 画去除热点后的图
+# plt.subplot(2, 1, 1)
+# plt.plot(time_series, label='Original Data', alpha=0.6)
+# plt.plot(time_series_cleaned, label='Data After Hotspot Removal', color='orange', linewidth=2)
+# plt.legend(loc='best')
+# plt.title('Data After Hotspot Removal')
+#
+# # 画去抖动后的图
+# plt.subplot(2, 1, 2)
+# plt.plot(time_series_cleaned, label='Data After Hotspot Removal', color='orange', alpha=0.6)
+# plt.plot(time_index, smoothed_series, label='Smoothed Data (Savitzky-Golay)', color='green', linewidth=2)
+# plt.legend(loc='best')
+# plt.title('Data After Smoothing')
+#
+# plt.tight_layout()
+# plt.show()
 
 N = len(smoothed_series)  # 数据长度
 fft_values = np.fft.fft(smoothed_series)  # 傅里叶变换

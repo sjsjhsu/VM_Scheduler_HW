@@ -98,6 +98,13 @@ def calculate_combined_stats(vm_util1, vm_util2):
     return avg_combined, p95_combined, max_combined
 
 
+def calculate_stats(vm_util):
+    avg_combined = np.mean(vm_util)
+    p95_combined = np.percentile(vm_util, 95)
+    max_combined = np.max(vm_util)
+    return avg_combined, p95_combined, max_combined
+
+
 # 从 diff.json 文件中获取每个虚拟机的匹配情况
 def analyze_diff_pairs(diff_file):
     diff_data = load_json(diff_file)
@@ -135,21 +142,51 @@ def analyze_diff_pairs(diff_file):
     return results
 
 
+def analyze_pairs(file):
+    diff_data = load_json(file)
+    results = []
+    for pair in diff_data:
+        vm1 = pair["vm1"]
+        vm2 = pair["vm2"]
+        vm1_util = load_vm_util(vm1)
+        vm2_util = load_vm_util(vm2)
+
+        avg_vm1, p95_vm1, max_vm1 = calculate_stats(vm1_util)
+        avg_vm2, p95_vm2, max_vm2 = calculate_stats(vm2_util)
+        avg_combined, p95_combined, max_combined = calculate_combined_stats(vm1_util, vm2_util)
+        results.append({
+            "vm1": vm1,
+            "vm1_stats": {"avg": avg_vm1, "p95": p95_vm1, "max": max_vm1},
+            "vm2": vm2,
+            "vm2_stats": {"avg": avg_vm2, "p95": p95_vm2, "max": max_vm2},
+            "combined_stats":  {"avg": avg_combined, "p95": p95_combined, "max": max_combined}
+        })
+    return results
+
+
 # 主程序
 def main():
     # 找不同匹配结果
-    file1 = 'json/vm_pairs_scores.json'
-    file2 = 'json/vm_pairs_scores_second.json'
-    output_file = 'json/diff.json'
-    diff = find_diff_pairs(file1, file2)
-    save_diff(diff, output_file)
+    # file1 = 'json/vm_pairs_scores.json'
+    # file2 = 'json/vm_pairs_scores_second.json'
+    # output_file = 'json/diff.json'
+    # diff = find_diff_pairs(file1, file2)
+    # save_diff(diff, output_file)
 
     # 分析
-    diff_file = 'json/diff.json'  # diff.json 文件路径
-    results = analyze_diff_pairs(diff_file)
+    # diff_file = 'json/diff.json'  # diff.json 文件路径
+    # results = analyze_diff_pairs(diff_file)
+    #
+    # # 保存结果到 JSON 文件
+    # output_file = "json/analyzed_diff_results.json"
+    # with open(output_file, 'w') as f:
+    #     json.dump(results, f, indent=4)
+
+    file = 'json/vm_pairs_scores_second.json'  # diff.json 文件路径
+    results = analyze_pairs(file)
 
     # 保存结果到 JSON 文件
-    output_file = "json/analyzed_diff_results.json"
+    output_file = "json/analyzed_stats_results.json"
     with open(output_file, 'w') as f:
         json.dump(results, f, indent=4)
 
