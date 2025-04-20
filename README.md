@@ -29,6 +29,10 @@
 
 ![化简](./picture/huajian.png)
 
+**score_algorithm_third.py**：使用亲和度公式进行打分
+
+**filter_vm_with_peridos.py**：根据周期筛选虚拟机
+
 **error_analysis.py**：对于两个频率不同的信号使用上述公式进行拟合的误差分析
 
 **period_amplitude_statistics.py**：统计Hotspot中虚拟机CPU利用率处理后的周期和振幅

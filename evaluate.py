@@ -44,7 +44,7 @@ def process_vm_data(vm_data):
     time_series_cleaned = pd.Series(vm_data, index=time_index)
 
     # 3. 去抖动：使用Savitzky-Golay滤波平滑数据
-    smoothed_series = savgol_filter(time_series_cleaned, window_length=289, polyorder=2)
+    smoothed_series = savgol_filter(time_series_cleaned, window_length=41, polyorder=2)
 
     return smoothed_series
 
@@ -219,6 +219,6 @@ def evaluate_distortion(vm1, vm2, data_folder):
                       distortion_rate)
 
 
-combine_one_pair_original("vm8.json", "vm1037.json", "Hotspot/Hotspot")
+combine_one_pair_original("vm1123.json", "vm18.json", "Hotspot/Hotspot")
 
 # evaluate_distortion("vm8.json", "vm1037.json", "Hotspot/Hotspot")

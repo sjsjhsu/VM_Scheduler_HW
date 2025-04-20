@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 import seaborn as sns
 matplotlib.use('TkAgg')
-
+plt.rcParams['font.sans-serif'] = ['SimHei']
+# Matplotlib中设置字体-黑体，解决Matplotlib中文乱码问题
+plt.rcParams['axes.unicode_minus'] = False
 
 # 生成信号
 def generate_signal(A1, f1, C1, A2, f2, C2, t):
@@ -187,12 +189,13 @@ def plot_error_distribution(file_path):
     for i in range(len(counts)):
         print(f"Range {bin_edges[i]:.1f} - {bin_edges[i + 1]:.1f}: {counts[i]}")
 
-    plt.figure(figsize=(10, 6))
-    sns.histplot(errors, bins=bins, kde=True, color='blue', edgecolor='black')
-
-    plt.title('Error Distribution', fontsize=16)
-    plt.xlabel('Error Value', fontsize=14)
-    plt.ylabel('Frequency', fontsize=14)
+    # 4. 绘制误差分布的柱状图
+    plt.figure(figsize=(5, 3), facecolor='white')
+    plt.hist(errors, bins=30, color='black', alpha=1)
+    plt.xlabel('误差', fontsize=10, color='black')
+    plt.ylabel('频率', fontsize=10, color='black')
+    plt.xticks(fontsize=12, color='black')
+    plt.yticks(fontsize=12, color='black')
 
     # 显示图表
     plt.tight_layout()

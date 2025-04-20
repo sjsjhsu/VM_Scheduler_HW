@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 matplotlib.use('TkAgg')
-
+plt.rcParams['font.sans-serif'] = ['SimHei']
+# Matplotlib中设置字体-黑体，解决Matplotlib中文乱码问题
+plt.rcParams['axes.unicode_minus'] = False
 
 def load_json(file_path):
     with open(file_path, 'r') as f:
@@ -33,12 +35,12 @@ def calculate_increase_ratio(combined_stats, vm1_stats, vm2_stats):
     max_vm2 = vm2_stats.get('max', 0)
 
     # 合成前两个虚拟机最大利用率中较大的那个
-    max_before = max(max_vm1, max_vm2)
+    max_before = max_vm1 + max_vm2
 
     # 计算增加量
     if max_before > 0:
         increase_ratio = (max_combined - max_before) / max_before * 100
-        return increase_ratio
+        return -increase_ratio
     return 0  # 如果合成前的最大利用率为0，返回0
 
 
@@ -63,12 +65,11 @@ def main():
     avg_reduction = sum(reduction_ratios) / len(reduction_ratios) if reduction_ratios else 0
     print(f"共配对了{len(reduction_ratios)}组虚拟机，P95利用率的平均下降率: {avg_reduction:.2f}%")
 
-    plt.figure(figsize=(10, 6))
-    plt.hist(reduction_ratios, bins=30, color='skyblue', edgecolor='black')
-    plt.title('Distribution of Reduction Ratios')
-    plt.xlabel('Reduction Ratio (%)')
-    plt.ylabel('Frequency')
-    plt.grid(True)
+    plt.figure(figsize=(5, 3))
+    plt.hist(reduction_ratios, bins=30, color='black')
+    plt.title('P95利用率下降率分布')
+    plt.xlabel('下降率')
+    plt.ylabel('频率')
     plt.tight_layout()
     plt.show()
 
@@ -93,12 +94,11 @@ def main2():
     avg_increase = sum(increase_ratios) / len(increase_ratios) if increase_ratios else 0
     print(f"最高利用率平均增加率: {avg_increase:.2f}")
 
-    plt.figure(figsize=(10, 6))
-    plt.hist(increase_ratios, bins=30, color='lightgreen', edgecolor='black')
-    plt.title('Distribution of Increase in Max Utilization')
-    plt.xlabel('Increase in Max Utilization')
-    plt.ylabel('Frequency')
-    plt.grid(True)
+    plt.figure(figsize=(5, 3))
+    plt.hist(increase_ratios, bins=30, color='black')
+    plt.title('最大利用率下降率分布')
+    plt.xlabel('下降率')
+    plt.ylabel('频率')
     plt.tight_layout()
     plt.show()
 

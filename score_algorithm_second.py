@@ -4,9 +4,9 @@
 """
 import numpy as np
 import json
-from collections import defaultdict
+import score_algorithm
 
-with open("json/vm_analysis_results2.json", "r") as f:
+with open("json/vm_analysis_results.json", "r") as f:
     vm_data = json.load(f)
 
 vms = []
@@ -17,22 +17,6 @@ for vm in vm_data:
         "amplitudes": vm["top_amplitudes"],
         "phases": vm["top_phases"],
     })
-
-# 周期分组
-def group_by_period(vms, epsilon_T=50):
-    """
-    按照周期对虚拟机进行分组
-    :param vms: 虚拟机列表
-    :param epsilon_T: 周期分组的阈值
-    :return: 按周期分组的虚拟机
-    """
-    groups = defaultdict(list)
-    for vm in vms:
-        # 使用虚拟机的第一个非直流分量的主周期作为分组依据
-        main_period = vm["periods"][1]
-        group_key = round(main_period / epsilon_T)
-        groups[group_key].append(vm)
-    return groups
 
 
 # 计算合成信号的幅度
@@ -64,6 +48,7 @@ def calculate_amplitude(vm1, vm2):
     return total_amplitude
 
 
+# Math.sqrt(amplitude1 * amplitude1 + amplitude2 * amplitude2 + 2 * amplitude1 * amplitude2 * Math.cos(phase1 - phase2));
 # 配对分数计算函数
 def calculate_score(vm1, vm2, w1=1.0, w2=5.0, w3=3.0, w4=5.0):
     """
@@ -114,7 +99,7 @@ def calculate_score(vm1, vm2, w1=1.0, w2=5.0, w3=3.0, w4=5.0):
 
     # 4. 计算合成信号的幅度并根据幅度调整得分
     R = calculate_amplitude(vm1, vm2)  # 计算合成信号的幅度
-    amplitude_adjustment = 1 / R if R > 0 else 0  # 幅度越小，得分越高
+    amplitude_adjustment = 1 / R if R > 0 else 1  # 幅度越小，得分越高
 
     total_score = w1 * freq_score + w2 * phase_score + w3 * amp_score + w4 * amplitude_adjustment
     # total_score = amplitude_adjustment
@@ -122,8 +107,8 @@ def calculate_score(vm1, vm2, w1=1.0, w2=5.0, w3=3.0, w4=5.0):
 
 
 # 按周期分组
-epsilon_T = 50
-groups = group_by_period(vms, epsilon_T=epsilon_T)
+epsilon_T = 288
+groups = score_algorithm.group_by_period(vms, epsilon_T=epsilon_T)
 
 # 分组内配对
 matched = set()
@@ -156,7 +141,7 @@ for group_key, group in groups.items():
 
 # 按得分由高到低排序
 sorted_pairs = sorted(pairs, key=lambda x: x[2], reverse=True)
-output_file = "json/vm_pairs_scores_second2.json"
+output_file = "json/vm_pairs_scores_second.json"
 output_data = [
     {"vm1": pair[0], "vm2": pair[1], "score": round(pair[2], 3)} for pair in sorted_pairs
 ]
